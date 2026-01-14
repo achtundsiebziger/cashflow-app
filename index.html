@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Cashflow">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <title>Cashflow-Planer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white; 
+            border-radius: 16px; 
+            padding: 30px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); 
+        }
+        h1 { color: #333; margin-bottom: 20px; font-size: 2em; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab { 
+            padding: 12px 24px; 
+            border: none; 
+            background: #e0e7ff; 
+            color: #4f46e5; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.3s; 
+        }
+        .tab.active { background: #4f46e5; color: white; }
+        .tab:hover { transform: translateY(-2px); }
+        .stats { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 30px; 
+        }
+        .stat-card { padding: 20px; border-radius: 12px; color: white; }
+        .stat-card.income { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .stat-card.expense { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .stat-card.balance { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
+        .stat-label { font-size: 0.9em; opacity: 0.9; margin-bottom: 8px; }
+        .stat-value { font-size: 2em; font-weight: bold; }
+        .btn { 
+            padding: 14px 28px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.3s; 
+            font-size: 1em; 
+        }
+        .btn-primary { background: #4f46e5; color: white; }
+        .btn-primary:hover { background: #4338ca; transform: translateY(-2px); }
+        .btn-secondary { background: #e5e7eb; color: #374151; }
+        .btn-secondary:hover { background: #d1d5db; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: 600; 
+            color: #374151; 
+        }
+        .form-group input, .form-group select { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #e5e7eb; 
+            border-radius: 8px; 
+            font-size: 1em; 
+        }
+        .form-group input:focus, .form-group select:focus { 
+            outline: none; 
+            border-color: #4f46e5; 
+        }
+        .bill-list { display: flex; flex-direction: column; gap: 15px; }
+        .bill-item { 
+            background: #f9fafb; 
+            padding: 20px; 
+            border-radius: 12px; 
+            border-left: 4px solid #4f46e5; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .bill-item.income { border-left-color: #10b981; }
+        .bill-item.expense { border-left-color: #ef4444; }
+        .bill-info h3 { color: #1f2937; margin-bottom: 5px; }
+        .bill-amount { font-size: 1.5em; font-weight: bold; }
+        .bill-amount.income { color: #10b981; }
+        .bill-amount.expense { color: #ef4444; }
+        .bill-actions { display: flex; gap: 10px; }
+        .btn-small { 
+            padding: 8px 16px; 
+            font-size: 0.9em; 
+            border-radius: 6px; 
+            border: none; 
+            cursor: pointer; 
+        }
+        .btn-edit { background: #3b82f6; color: white; }
+        .btn-delete { background: #ef4444; color: white; }
+        .month-nav { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #f3f4f6; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-bottom: 20px; 
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .month-nav button { 
+            background: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+        }
+        .month-nav h2 { font-size: 1.5em; color: #1f2937; }
+        .year-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            gap: 20px; 
+        }
+        .year-month { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            cursor: pointer; 
+            transition: all 0.3s; 
+        }
+        .year-month:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2); 
+        }
+        .year-month h3 { color: #1f2937; margin-bottom: 15px; font-size: 1.2em; }
+        .year-stat { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 8px; 
+            font-size: 0.95em; 
+        }
+        .hidden { display: none; }
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: #4f46e5;
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .install-prompt.show { display: flex; }
+        .install-prompt button {
+            background: white;
+            color: #4f46e5;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            h1 { font-size: 1.5em; }
+            .stats { grid-template-columns: 1fr; }
+            .stat-value { font-size: 1.5em; }
+        }
+    </style>
+</head>
+<body>
+    <div id="installPrompt" class="install-prompt">
+        <span>📱 Installiere die App für den schnellen Zugriff!</span>
+        <div>
+            <button onclick="installApp()">Installieren</button>
+            <button onclick="hideInstallPrompt()" style="background: transparent; color: white;">Später</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>💰 Cashflow-Planer</h1>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showView('month')">Monat</button>
+            <button class="tab" onclick="showView('year')">Jahr</button>
+            <button class="btn-secondary btn-small" onclick="exportData()">💾 Export</button>
+            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+            <button class="btn-secondary btn-small" onclick="document.getElementById('importFile').click()">📁 Import</button>
+        </div>
+
+        <div id="monthView">
+            <div class="month-nav">
+                <button onclick="changeMonth(-1)">← Vorheriger</button>
+                <h2 id="currentMonth"></h2>
+                <button onclick="changeMonth(1)">Nächster →</button>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card income">
+                    <div class="stat-label">Einnahmen</div>
+                    <div class="stat-value" id="incomeTotal">0.00 €</div>
+                </div>
+                <div class="stat-card expense">
+                    <div class="stat-label">Ausgaben</div>
+                    <div class="stat-value" id="expenseTotal">0.00 €</div>
+                </div>
+                <div class="stat-card balance">
+                    <div class="stat-label">Saldo</div>
+                    <div class="stat-value" id="balanceTotal">0.00 €</div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%; margin-bottom:20px;" onclick="toggleForm()">+ Neue Einnahme/Ausgabe</button>
+
+            <div id="addForm" class="hidden" style="background:#f9fafb; padding:20px; border-radius:12px; margin-bottom:20px;">
+                <h3 style="margin-bottom:15px;">Neuer Eintrag</h3>
+                <div class="form-group">
+                    <label>Typ</label>
+                    <select id="billType">
+                        <option value="income">Einnahme</option>
+                        <option value="expense">Ausgabe</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Bezeichnung</label>
+                    <input type="text" id="billName" placeholder="z.B. Gehalt, Miete">
+                </div>
+                <div class="form-group">
+                    <label>Betrag (€)</label>
+                    <input type="number" id="billAmount" step="0.01" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label>Kategorie</label>
+                    <select id="billCategory">
+                        <option value="fix">Fixkosten</option>
+                        <option value="variable">Variable</option>
+                        <option value="einmalig">Einmalig</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="billRecurring"> Wiederkehrend (12 Monate)</label>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="addBill()">Hinzufügen</button>
+                    <button class="btn btn-secondary" onclick="toggleForm()">Abbrechen</button>
+                </div>
+            </div>
+
+            <div class="bill-list" id="billList"></div>
+        </div>
+
+        <div id="yearView" class="hidden">
+            <div class="month-nav">
+                <button onclick="changeYear(-1)">← Vorheriges Jahr</button>
+                <h2 id="currentYear"></h2>
+                <button onclick="changeYear(1)">Nächstes Jahr →</button>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card income">
+                    <div class="stat-label">Jahres-Einnahmen</div>
+                    <div class="stat-value" id="yearIncomeTotal">0.00 €</div>
+                </div>
+                <div class="stat-card expense">
+                    <div class="stat-label">Jahres-Ausgaben</div>
+                    <div class="stat-value" id="yearExpenseTotal">0.00 €</div>
+                </div>
+                <div class="stat-card balance">
+                    <div class="stat-label">Jahres-Saldo</div>
+                    <div class="stat-value" id="yearBalanceTotal">0.00 €</div>
+                </div>
+            </div>
+
+            <div class="year-grid" id="yearGrid"></div>
+        </div>
+
+        <div style="margin-top: 30px; padding: 20px; background: #f9fafb; border-radius: 12px; text-align: center;">
+            <p style="color: #6b7280; font-size: 0.9em;">🔒 Alle Daten werden lokal auf deinem Gerät gespeichert</p>
+            <p style="color: #6b7280; font-size: 0.9em; margin-top: 5px;">✨ Funktioniert auch offline!</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker registriert'))
+                    .catch(err => console.log('Service Worker Fehler:', err));
+            });
+        }
+
+        // Install Prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPrompt').classList.add('show');
+        });
+
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('App installiert');
+                    }
+                    deferredPrompt = null;
+                    hideInstallPrompt();
+                });
+            }
+        }
+
+        function hideInstallPrompt() {
+            document.getElementById('installPrompt').classList.remove('show');
+        }
+    </script>
+</body>
+</html>
